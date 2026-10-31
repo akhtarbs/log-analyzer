@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Activity } from 'lucide-react'
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import {
   BUCKET_OPTIONS,
@@ -34,9 +35,9 @@ function Tip({ active, payload, offset }: { active?: boolean; payload?: { payloa
   const start = formatTimestamp(r.startMs, offset).slice(0, 16)
   const end = formatTimestamp(r.startMs + r.durationMs - 1, offset).slice(11, 16)
   return (
-    <div className="rounded-md border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface)] px-3 py-2 text-xs shadow-xl">
-      <p className="font-mono-tabular mb-1">{start} – {end}</p>
-      <p className="font-semibold mb-1">{formatNumber(r.total)} events</p>
+    <div className="panel px-3 py-2 text-xs">
+      <p className="font-mono-tabular mb-1 text-[color:var(--color-text-faint)]">{start} – {end}</p>
+      <p className="font-semibold mb-1 text-[color:var(--color-text)]">{formatNumber(r.total)} events</p>
       {SERIES.filter((s) => r[s.key] > 0).map((s) => (
         <p key={s.key} className="flex items-center gap-2 text-[color:var(--color-text-muted)]">
           <span className="h-2 w-2 rounded-sm" style={{ background: s.color }} /> {s.label}: {formatNumber(r[s.key])}
@@ -78,18 +79,29 @@ export function TimelineCard({
   const last = timeline.length ? formatTimestamp(timeline[timeline.length - 1][0] * 60000, offsetMinutes).slice(0, 16) : null
 
   return (
-    <section className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-raised)] p-4" aria-labelledby="timeline-title">
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <div>
-          <h2 id="timeline-title" className="text-sm font-semibold">Request timeline</h2>
-          {first && <p className="text-[11px] text-[color:var(--color-text-faint)] font-mono-tabular">{first} → {last}</p>}
+    <section className="panel p-5" aria-labelledby="timeline-title">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="icon-tile h-7 w-7 rounded-lg">
+            <Activity size={14} />
+          </span>
+          <div>
+            <h2 id="timeline-title" className="text-sm font-semibold text-[color:var(--color-text)]">
+              Request timeline
+            </h2>
+            {first && (
+              <p className="font-mono-tabular text-[10px] text-[color:var(--color-text-faint)]">
+                {first} → {last}
+              </p>
+            )}
+          </div>
         </div>
         <label className="flex items-center gap-2 text-xs text-[color:var(--color-text-muted)]">
           Group by
           <select
             value={choice}
             onChange={(e) => setChoice(e.target.value === 'auto' ? 'auto' : Number(e.target.value))}
-            className="rounded-md border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface)] px-2 py-1 text-xs"
+            className="rounded-lg border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface)] px-2.5 py-1.5 text-xs text-[color:var(--color-text)] transition-colors hover:border-[color:var(--color-accent)]/50"
           >
             <option value="auto">Auto ({OPTION_LABEL[autoMinutes] ?? `${autoMinutes} min`})</option>
             {BUCKET_OPTIONS.map((m) => (

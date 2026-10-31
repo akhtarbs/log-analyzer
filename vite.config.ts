@@ -3,10 +3,10 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// Base path is set for GitHub Pages: https://USERNAME.github.io/log-analyzer/
-// Override with VITE_BASE env var if the repo name differs.
+// Base path: on Vercel the app is served from the domain root; the GitHub Pages
+// build keeps the repo sub-path. Override anywhere with VITE_BASE.
 export default defineConfig({
-  base: process.env.VITE_BASE || '/log-analyzer/',
+  base: process.env.VERCEL ? '/' : process.env.VITE_BASE || '/log-analyzer/',
   plugins: [
     react(),
     tailwindcss(),
@@ -17,8 +17,8 @@ export default defineConfig({
         name: 'Local Log Analyzer',
         short_name: 'LogAnalyzer',
         description: 'Offline-first, local-only log analysis for security analysts.',
-        theme_color: '#0b0f14',
-        background_color: '#0b0f14',
+        theme_color: '#070b16',
+        background_color: '#070b16',
         display: 'standalone',
         start_url: '.',
         scope: '.',

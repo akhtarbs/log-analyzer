@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Search, SlidersHorizontal, Download, Upload, Save, Files, ArrowDown, ArrowUp } from 'lucide-react'
+import { Search, SlidersHorizontal, Download, Upload, Save, Files, ArrowDown, ArrowUp, ListTree } from 'lucide-react'
 import { useLiveQuery } from '../hooks/useLiveQuery'
 import { db } from '../db/database'
 import { queryLogs, getTagsForLogs } from '../services/logService'
@@ -21,6 +21,7 @@ import { countConditions, normalizeFilterGroup } from '../services/filterEngine'
 import { LogDetailDrawer } from '../components/logs/LogDetailDrawer'
 import { BulkActionToolbar } from '../components/logs/BulkActionToolbar'
 import { Button } from '../components/ui/Button'
+import { PageHeader } from '../components/ui/PageHeader'
 
 const QUICK_FILTERS: { key: any; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -187,7 +188,8 @@ export function LogExplorer() {
   const toggleSelect = (id: number) => {
     setSelected((prev) => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
@@ -239,42 +241,47 @@ export function LogExplorer() {
   const exportScope = useMemo(() => (selected.size > 0 ? rows.filter((r) => selected.has(r.id!)) : rows), [rows, selected])
 
   return (
-    <div className="flex flex-col h-full p-6 gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold">Log Explorer</h1>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setShowFilesPanel(true)}>
-            <Files size={14} /> Log Files {fileCount > 0 && `(${fileCount})`}
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => setShowImport(true)}>
-            <Upload size={14} /> Import Log
-          </Button>
-          <ExportMenu scope={exportScope} hasSelection={selected.size > 0} />
-        </div>
-      </div>
+    <div className="flex h-full flex-col gap-4 p-4 sm:p-5">
+      <PageHeader
+        eyebrow="Explore"
+        title="Log Explorer"
+        description="Search, filter and triage every event you have imported — without the data ever leaving this browser."
+        icon={ListTree}
+        actions={
+          <>
+            <Button variant="secondary" size="sm" onClick={() => setShowFilesPanel(true)}>
+              <Files size={14} /> Log files {fileCount > 0 && `(${fileCount})`}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => setShowImport(true)}>
+              <Upload size={14} /> Import log
+            </Button>
+            <ExportMenu scope={exportScope} hasSelection={selected.size > 0} />
+          </>
+        }
+      />
 
       {excludedNotice && (
-        <div className="flex items-center justify-between rounded-md border border-[color:var(--color-medium)]/30 bg-[color:var(--color-medium)]/8 px-3 py-2 text-xs text-[color:var(--color-medium)]">
+        <div className="flex items-center justify-between rounded-lg border border-[color:var(--color-medium)]/35 bg-[color:var(--color-medium)]/10 px-3.5 py-2.5 text-xs text-[color:var(--color-medium)]">
           <span>Some log files are excluded from analysis and hidden from results below.</span>
-          <button onClick={() => setShowFilesPanel(true)} className="underline shrink-0 ml-3">Manage files</button>
+          <button onClick={() => setShowFilesPanel(true)} className="shrink-0 ml-3 underline">Manage files</button>
         </div>
       )}
 
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-md">
+      <div className="panel flex flex-wrap items-center gap-2.5 p-3">
+        <div className="relative min-w-[200px] flex-1 md:max-w-sm">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--color-text-faint)]" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search logs…"
-            className="w-full rounded-md border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface)] pl-9 pr-3 py-2 text-sm"
+            className="w-full rounded-lg border border-[color:var(--color-border-strong)] bg-[color:var(--color-bg)]/60 py-2 pl-9 pr-3 text-sm transition-colors focus:border-[color:var(--color-accent)]/70"
           />
         </div>
         <Button variant="secondary" size="sm" onClick={handleOpenFilterBuilder}>
           <SlidersHorizontal size={14} /> Filter
         </Button>
         {countConditions(appliedFilterGroup) > 0 && (
-          <span className="text-xs text-[color:var(--color-accent-strong)]">{countConditions(appliedFilterGroup)} active</span>
+          <span className="chip chip-active">{countConditions(appliedFilterGroup)} active</span>
         )}
         <Button
           variant="secondary"
@@ -296,11 +303,7 @@ export function LogExplorer() {
           <button
             key={qf.key}
             onClick={() => setQuickFilter(qf.key)}
-            className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
-              quickFilter === qf.key
-                ? 'border-[color:var(--color-accent)] bg-[color:var(--color-accent)]/12 text-[color:var(--color-accent-strong)]'
-                : 'border-[color:var(--color-border-strong)] text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-hover)]'
-            }`}
+            className={`chip ${quickFilter === qf.key ? 'chip-active' : ''}`}
           >
             {qf.label}
           </button>
@@ -318,25 +321,25 @@ export function LogExplorer() {
       )}
 
       {showSaveFilterName && (
-        <div className="flex items-center gap-2 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-bg-raised)] p-3">
+        <div className="panel flex items-center gap-2 p-3">
           <input
             value={saveFilterName}
             onChange={(e) => setSaveFilterName(e.target.value)}
             placeholder="Filter name"
-            className="flex-1 rounded-md border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface)] px-2.5 py-1.5 text-xs"
+            className="flex-1 rounded-lg border border-[color:var(--color-border-strong)] bg-[color:var(--color-bg)]/60 px-2.5 py-1.5 text-xs"
           />
           <Button variant="primary" size="sm" onClick={confirmSaveFilter}><Save size={14} /> Save</Button>
           <Button variant="ghost" size="sm" onClick={() => setShowSaveFilterName(false)}>Cancel</Button>
         </div>
       )}
 
-      <div className="flex-1 min-h-0">
+      <div className="min-h-0 flex-1">
         {rows.length === 0 && loading ? (
           <div className="flex h-full items-center justify-center text-sm text-[color:var(--color-text-faint)]">
             Loading events…
           </div>
         ) : rows.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm text-[color:var(--color-text-faint)]">
+          <div className="panel-soft flex h-full items-center justify-center border-dashed text-sm text-[color:var(--color-text-faint)]">
             {total === 0 && fileCount === 0 ? 'No logs imported yet. Import a file to get started.' : 'No events match your search or filter.'}
           </div>
         ) : (
@@ -352,15 +355,15 @@ export function LogExplorer() {
         )}
       </div>
 
-      <div className="flex items-center justify-between text-xs text-[color:var(--color-text-muted)] flex-wrap gap-2">
-        <span>{total.toLocaleString()} events</span>
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[color:var(--color-text-muted)]">
+        <span className="font-mono-tabular">{total.toLocaleString()} events</span>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span>Rows:</span>
             <select
               value={pageSize}
               onChange={(e) => setPageSize(Number(e.target.value))}
-              className="rounded-md border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface)] px-2 py-1 text-xs font-mono-tabular"
+              className="rounded-lg border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface)] px-2 py-1 text-xs font-mono-tabular"
             >
               {PAGE_SIZE_OPTIONS.map((n) => (
                 <option key={n} value={n}>{n}</option>
@@ -382,7 +385,7 @@ export function LogExplorer() {
                     ;(e.target as HTMLInputElement).blur()
                   }
                 }}
-                className="w-12 rounded-md border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface)] px-1.5 py-1 text-center text-xs font-mono-tabular"
+                className="w-12 rounded-lg border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface)] px-1.5 py-1 text-center text-xs font-mono-tabular"
               />
               <span>/ {totalPages}</span>
             </div>
@@ -422,7 +425,7 @@ function ExportMenu({ scope, hasSelection }: { scope: LogEvent[]; hasSelection: 
         <Download size={14} /> Export {hasSelection ? `(${scope.length} selected)` : ''}
       </Button>
       {open && (
-        <div className="absolute right-0 mt-1 w-40 rounded-md border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface)] shadow-xl z-20 overflow-hidden">
+        <div className="panel absolute right-0 z-20 mt-1 w-44 overflow-hidden p-1">
           {[
             { label: 'Export CSV', fn: () => exportCsv(scope) },
             { label: 'Export JSON', fn: () => exportJson(scope) },
@@ -431,7 +434,7 @@ function ExportMenu({ scope, hasSelection }: { scope: LogEvent[]; hasSelection: 
             <button
               key={opt.label}
               onClick={() => { opt.fn(); setOpen(false) }}
-              className="w-full text-left px-3 py-2 text-xs hover:bg-[color:var(--color-surface-hover)]"
+              className="w-full rounded-md px-3 py-2 text-left text-xs text-[color:var(--color-text-muted)] transition-colors hover:bg-[color:var(--color-surface-hover)] hover:text-[color:var(--color-text)]"
             >
               {opt.label}
             </button>

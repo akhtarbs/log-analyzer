@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import type { ComponentType, CSSProperties, ReactNode } from 'react'
 import { Settings as SettingsIcon, Download, Upload, Trash2, HardDrive, AlertTriangle, Files, Clock } from 'lucide-react'
 import { useLiveQuery } from '../hooks/useLiveQuery'
 import { db } from '../db/database'
 import { Button } from '../components/ui/Button'
+import { PageHeader } from '../components/ui/PageHeader'
 import { LogFilesPanel } from '../components/logs/LogFilesPanel'
 import { formatBytes, formatNumber, formatTimestamp } from '../utils/format'
 import { exportBackup, restoreBackup, type RestoreMode } from '../services/backupService'
@@ -77,32 +79,40 @@ export function SettingsPage() {
     window.location.reload()
   }
 
-  return (
-    <div className="p-6 space-y-6 max-w-3xl">
-      <h1 className="text-lg font-bold flex items-center gap-2">
-        <SettingsIcon size={18} className="text-[color:var(--color-accent)]" /> Settings
-      </h1>
+  const storagePercent = storageEstimate && storageEstimate.quota > 0
+    ? Math.min(100, (storageEstimate.usage / storageEstimate.quota) * 100)
+    : 0
 
-      {/* Timezone */}
+  return (
+    <div className="mx-auto max-w-4xl space-y-5 p-4 sm:p-6">
+      <PageHeader
+        eyebrow="Workspace"
+        title="Settings"
+        description="Display preferences, local data management, and backup tooling. Everything stays on this device."
+        icon={SettingsIcon}
+      />
+
       <TimezoneSection />
 
       {/* Data Management */}
-      <section className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-raised)] p-5">
-        <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><HardDrive size={15} /> Data Management</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <StatBox label="Events" value={formatNumber(eventCount)} />
-          <StatBox label="Log Files" value={formatNumber(fileCount)} />
-          <StatBox label="Marked" value={formatNumber(markedCount)} />
-          <StatBox label="Investigations" value={formatNumber(invCount)} />
+      <Section icon={HardDrive} title="Data Management" eyebrow="Storage">
+        <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <StatBox label="Events" value={formatNumber(eventCount)} tone="var(--color-accent)" />
+          <StatBox label="Log Files" value={formatNumber(fileCount)} tone="var(--color-violet)" />
+          <StatBox label="Marked" value={formatNumber(markedCount)} tone="var(--color-high)" />
+          <StatBox label="Investigations" value={formatNumber(invCount)} tone="var(--color-cyan)" />
         </div>
         {storageEstimate && (
-          <div className="mb-4">
-            <p className="text-xs text-[color:var(--color-text-muted)] mb-1.5">
-              Local Storage: {formatBytes(storageEstimate.usage)} {storageEstimate.quota > 0 && `of ${formatBytes(storageEstimate.quota)} available`}
-            </p>
+          <div className="mb-4 rounded-xl bg-[color:var(--color-surface)]/50 p-3.5">
+            <div className="mb-2 flex items-center justify-between text-xs">
+              <span className="text-[color:var(--color-text-muted)]">Local storage used</span>
+              <span className="font-mono-tabular text-[color:var(--color-text)]">
+                {formatBytes(storageEstimate.usage)} {storageEstimate.quota > 0 && <span className="text-[color:var(--color-text-faint)]">of {formatBytes(storageEstimate.quota)}</span>}
+              </span>
+            </div>
             {storageEstimate.quota > 0 && (
-              <div className="h-1.5 rounded-full bg-[color:var(--color-surface)] overflow-hidden">
-                <div className="h-full bg-[color:var(--color-accent)]" style={{ width: `${Math.min(100, (storageEstimate.usage / storageEstimate.quota) * 100)}%` }} />
+              <div className="h-2 overflow-hidden rounded-full bg-[color:var(--color-bg)]">
+                <div className="h-full rounded-full bg-[image:var(--accent-gradient)] transition-all" style={{ width: `${storagePercent}%` }} />
               </div>
             )}
           </div>
@@ -110,15 +120,14 @@ export function SettingsPage() {
         <Button variant="danger" size="sm" onClick={() => setConfirmClear(true)}>
           <Trash2 size={14} /> Clear All Data
         </Button>
-      </section>
+      </Section>
 
       {/* Log Files */}
-      <section className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-raised)] p-5">
-        <h2 className="text-sm font-semibold mb-2 flex items-center gap-2"><Files size={15} /> Log Files</h2>
-        <p className="text-xs text-[color:var(--color-text-muted)] mb-3">
+      <Section icon={Files} title="Log Files" eyebrow="Corpus">
+        <p className="mb-3 text-xs leading-relaxed text-[color:var(--color-text-muted)]">
           View every imported file, and choose which ones are included in analysis. Excluded files stay in storage but are hidden from the dashboard, analysis, and detection rules.
         </p>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="secondary" size="sm" onClick={() => setShowFilesPanel(true)}>
             <Files size={14} /> Manage Log Files
           </Button>
@@ -126,30 +135,31 @@ export function SettingsPage() {
             Rebuild statistics
           </Button>
         </div>
-        <p className="text-[11px] text-[color:var(--color-text-faint)] mt-2">
+        <p className="mt-2 text-[11px] leading-relaxed text-[color:var(--color-text-faint)]">
           Dashboard and Analysis read pre-computed per-file statistics, which are built when a file is imported. Rebuild only if numbers ever look wrong.
         </p>
-        {statsMessage && <p className="text-xs text-[color:var(--color-text-muted)] mt-1">{statsMessage}</p>}
-      </section>
+        {statsMessage && <p className="mt-1 text-xs text-[color:var(--color-benign)]">{statsMessage}</p>}
+      </Section>
 
       {/* Backup */}
-      <section className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-raised)] p-5">
-        <h2 className="text-sm font-semibold mb-3">Backup</h2>
-        <p className="text-xs text-[color:var(--color-text-muted)] mb-3">
+      <Section icon={Download} title="Backup" eyebrow="Portability">
+        <p className="mb-3 text-xs leading-relaxed text-[color:var(--color-text-muted)]">
           Exports metadata, marks, tags, investigations, saved filters, detection rules, and settings as a local file. Nothing is sent anywhere.
         </p>
-        <label className="flex items-center gap-2 text-xs mb-3">
+        <label className="mb-3 flex items-center gap-2 text-xs text-[color:var(--color-text-muted)]">
           <input type="checkbox" checked={includeOriginal} onChange={(e) => setIncludeOriginal(e.target.checked)} className="accent-[color:var(--color-accent)]" />
           Include original log files (creates a .zip)
         </label>
         <Button variant="secondary" size="sm" onClick={handleBackup} disabled={busy}>
           <Download size={14} /> Export Backup
         </Button>
-      </section>
+      </Section>
 
       {/* Restore */}
-      <section className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-raised)] p-5">
-        <h2 className="text-sm font-semibold mb-3">Restore</h2>
+      <Section icon={Upload} title="Restore" eyebrow="Portability">
+        <p className="mb-3 text-xs leading-relaxed text-[color:var(--color-text-muted)]">
+          Load a backup file to bring this workspace back. Merge keeps existing data; replace wipes it first.
+        </p>
         <label className="inline-block">
           <span className="sr-only">Restore backup</span>
           <input
@@ -163,28 +173,42 @@ export function SettingsPage() {
             <Upload size={14} /> Restore Backup
           </Button>
         </label>
-      </section>
+      </Section>
 
       {/* Restore confirm dialog */}
       {restoreConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-raised)] p-5">
-            <p className="text-sm font-semibold mb-2">Existing data detected.</p>
-            <p className="text-xs text-[color:var(--color-text-muted)] mb-4">Choose how to restore <span className="font-mono-tabular">{restoreConfirm.name}</span>.</p>
-            <div className="flex gap-2 mb-4">
-              {(['merge', 'replace'] as RestoreMode[]).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setRestoreMode(m)}
-                  className={`flex-1 rounded-md px-3 py-2 text-xs font-medium border capitalize ${restoreMode === m ? 'border-[color:var(--color-accent)] bg-[color:var(--color-accent)]/12 text-[color:var(--color-accent-strong)]' : 'border-[color:var(--color-border-strong)] text-[color:var(--color-text-muted)]'}`}
-                >
-                  {m}
-                </button>
-              ))}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#04060d]/70 p-4 backdrop-blur-sm">
+          <div className="panel rise-in w-full max-w-sm overflow-hidden">
+            <div className="border-b border-[color:var(--color-border)]/70 px-5 py-4">
+              <div className="mb-1 flex items-center gap-2">
+                <span className="eyebrow">Restore</span>
+                <span className="accent-rule w-6 opacity-70" />
+              </div>
+              <p className="display text-sm font-bold">Existing data detected</p>
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setRestoreConfirm(null)}>Cancel</Button>
-              <Button variant="primary" size="sm" onClick={confirmRestore} disabled={busy}>{busy ? 'Restoring…' : 'Restore'}</Button>
+            <div className="p-5">
+              <p className="mb-4 text-xs text-[color:var(--color-text-muted)]">
+                Choose how to restore <span className="font-mono-tabular text-[color:var(--color-text)]">{restoreConfirm.name}</span>.
+              </p>
+              <div className="mb-4 flex gap-2">
+                {(['merge', 'replace'] as RestoreMode[]).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setRestoreMode(m)}
+                    className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold capitalize transition-colors ${
+                      restoreMode === m
+                        ? 'border-[color:var(--color-accent)]/55 bg-[color:var(--color-accent)]/12 text-[color:var(--color-accent-strong)]'
+                        : 'border-[color:var(--color-border-strong)] text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-hover)]'
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setRestoreConfirm(null)}>Cancel</Button>
+                <Button variant="primary" size="sm" onClick={confirmRestore} disabled={busy}>{busy ? 'Restoring…' : 'Restore'}</Button>
+              </div>
             </div>
           </div>
         </div>
@@ -192,14 +216,18 @@ export function SettingsPage() {
 
       {/* Clear confirm dialog */}
       {confirmClear && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-[color:var(--color-critical)]/40 bg-[color:var(--color-bg-raised)] p-5">
-            <div className="flex items-center gap-2 mb-2 text-[color:var(--color-critical)]">
-              <AlertTriangle size={18} />
-              <p className="text-sm font-semibold">This will permanently delete all local application data.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#04060d]/70 p-4 backdrop-blur-sm">
+          <div className="panel rise-in w-full max-w-sm overflow-hidden border-[color:var(--color-critical)]/40">
+            <div className="border-b border-[color:var(--color-critical)]/25 px-5 py-4">
+              <div className="flex items-center gap-2 text-[color:var(--color-critical)]">
+                <AlertTriangle size={18} />
+                <p className="text-sm font-semibold">Delete all local data?</p>
+              </div>
             </div>
-            <p className="text-xs text-[color:var(--color-text-muted)] mb-4">This action cannot be undone.</p>
-            <div className="flex justify-end gap-2">
+            <p className="px-5 py-4 text-xs leading-relaxed text-[color:var(--color-text-muted)]">
+              This will permanently delete every imported log, mark, tag, investigation, saved filter, and rule. This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2 border-t border-[color:var(--color-border)]/70 px-5 py-3">
               <Button variant="secondary" size="sm" onClick={() => setConfirmClear(false)}>Cancel</Button>
               <Button variant="danger" size="sm" onClick={handleClearAll} disabled={busy}>Delete Everything</Button>
             </div>
@@ -212,11 +240,38 @@ export function SettingsPage() {
   )
 }
 
-function StatBox({ label, value }: { label: string; value: string }) {
+function Section({
+  icon: Icon,
+  title,
+  eyebrow,
+  children,
+}: {
+  icon: ComponentType<{ size?: number | string }>
+  title: string
+  eyebrow: string
+  children: ReactNode
+}) {
   return (
-    <div className="rounded-lg bg-[color:var(--color-surface)] p-3">
-      <p className="text-[10px] text-[color:var(--color-text-muted)] mb-0.5">{label}</p>
-      <p className="text-base font-bold font-mono-tabular">{value}</p>
+    <section className="panel relative overflow-hidden p-5">
+      <div className="mb-4 flex items-center gap-2.5">
+        <span className="icon-tile">
+          <Icon size={16} />
+        </span>
+        <div>
+          <p className="eyebrow">{eyebrow}</p>
+          <h2 className="display text-sm font-bold leading-tight">{title}</h2>
+        </div>
+      </div>
+      {children}
+    </section>
+  )
+}
+
+function StatBox({ label, value, tone }: { label: string; value: string; tone?: string }) {
+  return (
+    <div className="stat-tile !p-3" style={tone ? ({ ['--tile-color' as string]: tone } as CSSProperties) : undefined}>
+      <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[color:var(--color-text-faint)]">{label}</p>
+      <p className="stat-value text-lg font-bold">{value}</p>
     </div>
   )
 }
@@ -226,16 +281,16 @@ function TimezoneSection() {
   const now = Date.now()
 
   return (
-    <section className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-raised)] p-5">
-      <h2 className="text-sm font-semibold mb-2 flex items-center gap-2"><Clock size={15} /> Timezone</h2>
-      <p className="text-xs text-[color:var(--color-text-muted)] mb-3">
+    <Section icon={Clock} title="Timezone" eyebrow="Display">
+      <p className="mb-3 text-xs leading-relaxed text-[color:var(--color-text-muted)]">
         Choose the UTC/GMT offset used to display every timestamp in the app — the Log Explorer table, log details, dashboard, analysis, investigations, and the time-range filter. This only changes how times are displayed; the underlying data is always stored and matched in UTC, so nothing needs re-importing.
       </p>
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         <select
           value={offsetMinutes}
           onChange={(e) => setOffsetMinutes(Number(e.target.value))}
-          className="rounded-md border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface)] px-3 py-2 text-sm font-mono-tabular"
+          aria-label="Display timezone"
+          className="rounded-lg border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface)] px-3 py-2 font-mono-tabular text-sm transition-colors focus:border-[color:var(--color-accent)]/60 focus:outline-none"
         >
           {TIMEZONE_OPTIONS.map((tz) => (
             <option key={tz.offsetMinutes} value={tz.offsetMinutes}>{tz.label}</option>
@@ -245,6 +300,6 @@ function TimezoneSection() {
           Right now: <span className="font-mono-tabular text-[color:var(--color-text)]">{formatTimestamp(now, offsetMinutes)}</span>
         </span>
       </div>
-    </section>
+    </Section>
   )
 }

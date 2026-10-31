@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Check, Copy, Download, ExternalLink, X } from 'lucide-react'
+import { Check, Copy, Download, ExternalLink, Target, X } from 'lucide-react'
 import type { MergedStats } from '../../analysis/aggregate'
 import {
   TAB_LABELS,
@@ -29,8 +29,12 @@ function BadgePill({ badge }: { badge: Badge }) {
   const c = TONE[badge.tone]
   return (
     <span
-      className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold whitespace-nowrap border"
-      style={{ color: c, background: `color-mix(in oklab, ${c} 14%, transparent)`, borderColor: `color-mix(in oklab, ${c} 30%, transparent)` }}
+      className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold"
+      style={{
+        color: c,
+        background: `color-mix(in oklab, ${c} 13%, transparent)`,
+        boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${c} 32%, transparent)`,
+      }}
     >
       {badge.label}
     </span>
@@ -60,26 +64,29 @@ export function IndicatorsCard({
   }
 
   return (
-    <section className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-raised)] p-4" aria-labelledby="indicators-title">
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <h2 id="indicators-title" className="text-sm font-semibold">Indicators</h2>
+    <section className="panel p-5" aria-labelledby="indicators-title">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="icon-tile h-7 w-7 rounded-lg">
+            <Target size={14} />
+          </span>
+          <h2 id="indicators-title" className="text-sm font-semibold text-[color:var(--color-text)]">
+            Indicators
+          </h2>
+        </div>
         <Button variant="ghost" size="sm" onClick={exportCsv} disabled={!merged || rows.length === 0} title="Download this list (up to 1,000 entries) as CSV">
           <Download size={14} /> Export CSV
         </Button>
       </div>
 
-      <div role="tablist" aria-label="Indicator type" className="flex flex-wrap gap-1 mb-3">
+      <div role="tablist" aria-label="Indicator type" className="mb-3 flex flex-wrap gap-1.5">
         {tabs.map((t) => (
           <button
             key={t}
             role="tab"
             aria-selected={t === activeTab}
             onClick={() => setTab(t)}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium border transition-colors ${
-              t === activeTab
-                ? 'border-[color:var(--color-accent)] bg-[color:var(--color-accent)]/12 text-[color:var(--color-accent-strong)]'
-                : 'border-[color:var(--color-border-strong)] text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-hover)]'
-            }`}
+            className={`chip ${t === activeTab ? 'chip-active' : ''}`}
           >
             {TAB_LABELS[t]}
           </button>
@@ -110,7 +117,7 @@ export function IndicatorsCard({
                 </span>
                 <span className="hidden sm:flex items-center gap-2">
                   <span className="flex-1 h-1.5 rounded-full bg-[color:var(--color-surface)] overflow-hidden">
-                    <span className="block h-full bg-[color:var(--color-accent)]/70" style={{ width: `${(r.count / max) * 100}%` }} />
+                    <span className="block h-full rounded-full bg-[image:var(--accent-gradient)] opacity-80" style={{ width: `${(r.count / max) * 100}%` }} />
                   </span>
                   <span className="w-10 text-right text-[11px] font-mono-tabular text-[color:var(--color-text-muted)]">{formatPercent(r.share)}</span>
                 </span>
@@ -188,17 +195,17 @@ function IndicatorDetail({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onMouseDown={(ev) => ev.target === ev.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-labelledby="indicator-title" className="w-full max-w-md rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-raised)] shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[color:var(--color-border)]">
-          <h2 id="indicator-title" className="text-sm font-semibold">{TAB_SINGULAR[tab]}</h2>
-          <button ref={closeRef} onClick={onClose} aria-label="Close" className="text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm" onMouseDown={(ev) => ev.target === ev.currentTarget && onClose()}>
+      <div role="dialog" aria-modal="true" aria-labelledby="indicator-title" className="panel w-full max-w-md overflow-hidden">
+        <div className="flex items-center justify-between border-b border-[color:var(--color-border)] px-5 py-3.5">
+          <h2 id="indicator-title" className="display text-sm font-semibold">{TAB_SINGULAR[tab]}</h2>
+          <button ref={closeRef} onClick={onClose} aria-label="Close" className="rounded-md p-1 text-[color:var(--color-text-muted)] transition-colors hover:bg-[color:var(--color-surface-hover)] hover:text-[color:var(--color-text)]">
             <X size={16} />
           </button>
         </div>
 
-        <div className="p-5 space-y-4">
-          <p className="text-xs font-mono-tabular break-all rounded-md bg-[color:var(--color-bg)] border border-[color:var(--color-border)] p-2.5">{row.value}</p>
+        <div className="space-y-4 p-5">
+          <p className="break-all rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-bg)]/70 p-2.5 font-mono-tabular text-xs">{row.value}</p>
 
           {row.badges.length > 0 && <div className="flex flex-wrap gap-1">{row.badges.map((b) => <BadgePill key={b.label} badge={b} />)}</div>}
 
@@ -229,7 +236,7 @@ function IndicatorDetail({
           </p>
         </div>
 
-        <div className="flex justify-between gap-2 px-5 py-3.5 border-t border-[color:var(--color-border)]">
+        <div className="flex justify-between gap-2 border-t border-[color:var(--color-border)] px-5 py-3.5">
           <Button variant="ghost" size="sm" onClick={copy}>
             {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copied' : 'Copy IoC'}
           </Button>

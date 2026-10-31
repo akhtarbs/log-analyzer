@@ -62,18 +62,30 @@ export function ImportDialog({ onClose, onImported }: { onClose: () => void; onI
     onImported()
   }, [onImported])
 
+  const hasProgress = Object.keys(progress).length > 0
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-lg rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-raised)] shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[color:var(--color-border)]">
-          <h2 className="text-sm font-semibold">Import Log</h2>
-          <button onClick={onClose} className="text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#04060d]/70 p-4 backdrop-blur-sm">
+      <div className="panel rise-in w-full max-w-lg overflow-hidden">
+        <div className="flex items-start justify-between gap-4 border-b border-[color:var(--color-border)]/70 px-5 py-4">
+          <div>
+            <div className="mb-1 flex items-center gap-2">
+              <span className="eyebrow">Ingest</span>
+              <span className="accent-rule w-6 opacity-70" />
+            </div>
+            <h2 className="display text-base font-bold leading-tight">Import Log Files</h2>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close import dialog"
+            className="rounded-lg p-1.5 text-[color:var(--color-text-muted)] transition-colors hover:bg-[color:var(--color-surface-hover)] hover:text-[color:var(--color-text)]"
+          >
             <X size={18} />
           </button>
         </div>
 
-        <div className="p-5 space-y-4">
-          {Object.keys(progress).length === 0 && (
+        <div className="max-h-[65vh] space-y-3 overflow-y-auto p-5">
+          {!hasProgress && (
             <div
               onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
               onDragLeave={() => setDragging(false)}
@@ -83,18 +95,24 @@ export function ImportDialog({ onClose, onImported }: { onClose: () => void; onI
                 handleFiles(e.dataTransfer.files)
               }}
               onClick={() => inputRef.current?.click()}
-              className={`flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed py-12 cursor-pointer transition-colors ${
-                dragging ? 'border-[color:var(--color-accent)] bg-[color:var(--color-accent)]/5' : 'border-[color:var(--color-border-strong)]'
+              className={`group relative flex cursor-pointer flex-col items-center justify-center gap-3 overflow-hidden rounded-xl border-2 border-dashed px-6 py-12 text-center transition-all ${
+                dragging
+                  ? 'border-[color:var(--color-accent)] bg-[color:var(--color-accent)]/10 shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-accent)_12%,transparent)]'
+                  : 'border-[color:var(--color-border-strong)] hover:border-[color:var(--color-accent)]/60 hover:bg-[color:var(--color-surface)]/50'
               }`}
             >
-              <UploadCloud size={28} className="text-[color:var(--color-text-muted)]" />
-              <p className="text-sm text-[color:var(--color-text)]">Drop your log files here</p>
-              <p className="text-xs text-[color:var(--color-text-faint)]">or</p>
+              <span className="logo-mark !h-12 !w-12 !rounded-2xl">
+                <UploadCloud size={22} />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-[color:var(--color-text)]">Drop your log files here</p>
+                <p className="mt-1 text-xs text-[color:var(--color-text-faint)]">Logs stay in your browser — nothing is uploaded.</p>
+              </div>
               <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); inputRef.current?.click() }}>
                 Browse Files
               </Button>
-              <p className="text-[10px] uppercase tracking-wide text-[color:var(--color-text-faint)] mt-2">
-                Supported: LOG TXT CSV JSON JSONL
+              <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-[color:var(--color-text-faint)]">
+                LOG · TXT · CSV · JSON · JSONL
               </p>
               <input
                 ref={inputRef}
@@ -108,34 +126,54 @@ export function ImportDialog({ onClose, onImported }: { onClose: () => void; onI
           )}
 
           {Object.entries(progress).map(([name, p]) => (
-            <div key={name} className="rounded-lg border border-[color:var(--color-border)] p-3">
-              <div className="flex items-center gap-2 mb-2">
-                {p.done ? (
-                  <CheckCircle2 size={14} className="text-[color:var(--color-benign)]" />
-                ) : (
-                  <FileText size={14} className="text-[color:var(--color-text-muted)]" />
-                )}
-                <span className="text-xs font-medium truncate">{name}</span>
+            <div
+              key={name}
+              className={`panel-soft p-3.5 transition-colors ${
+                p.error
+                  ? 'border-[color:var(--color-critical)]/40'
+                  : p.done
+                    ? 'border-[color:var(--color-benign)]/30'
+                    : ''
+              }`}
+            >
+              <div className="mb-2.5 flex items-center gap-2">
+                <span
+                  className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${
+                    p.error
+                      ? 'bg-[color:var(--color-critical)]/15 text-[color:var(--color-critical)]'
+                      : p.done
+                        ? 'bg-[color:var(--color-benign)]/15 text-[color:var(--color-benign)]'
+                        : 'bg-[color:var(--color-accent)]/15 text-[color:var(--color-accent-strong)]'
+                  }`}
+                >
+                  {p.done ? <CheckCircle2 size={14} /> : <FileText size={14} />}
+                </span>
+                <span className="truncate font-mono-tabular text-xs font-medium">{name}</span>
               </div>
 
               {p.error ? (
                 <p className="text-xs text-[color:var(--color-critical)]">{p.error}</p>
               ) : !p.done ? (
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <ProgressRow label="Parsing" percent={p.parsePercent} />
                   <ProgressRow label="Saving" percent={p.savePercent} />
-                  <p className="text-[10px] text-[color:var(--color-text-faint)] font-mono-tabular">Events saved: {p.events.toLocaleString()}</p>
+                  <p className="font-mono-tabular text-[10px] text-[color:var(--color-text-faint)]">
+                    Events saved: {p.events.toLocaleString()}
+                  </p>
                 </div>
               ) : (
-                <div className="text-xs text-[color:var(--color-text-muted)] grid grid-cols-2 gap-x-4 gap-y-1 font-mono-tabular">
-                  <span>Events</span><span className="text-[color:var(--color-text)]">{p.totalEvents?.toLocaleString()}</span>
-                  <span>Parser</span><span className="text-[color:var(--color-text)]">{p.parser}</span>
-                  <span>Time</span><span className="text-[color:var(--color-text)]">{formatDuration(p.processingTimeMs ?? 0)}</span>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 font-mono-tabular text-xs text-[color:var(--color-text-muted)]">
+                  <span className="text-[color:var(--color-text-faint)]">Events</span>
+                  <span className="text-right text-[color:var(--color-text)]">{p.totalEvents?.toLocaleString()}</span>
+                  <span className="text-[color:var(--color-text-faint)]">Parser</span>
+                  <span className="text-right text-[color:var(--color-text)]">{p.parser}</span>
+                  <span className="text-[color:var(--color-text-faint)]">Time</span>
+                  <span className="text-right text-[color:var(--color-text)]">{formatDuration(p.processingTimeMs ?? 0)}</span>
                   {p.timings && (
                     <>
-                      <span>Breakdown</span>
-                      <span className="text-[color:var(--color-text)]">
-                        parse {formatDuration(p.timings.parseMs)} · database {formatDuration(p.timings.saveMs)}
+                      <span className="text-[color:var(--color-text-faint)]">Breakdown</span>
+                      <span className="text-right text-[color:var(--color-text)]">
+                        parse {formatDuration(p.timings.parseMs)} · db {formatDuration(p.timings.saveMs)}
                       </span>
                     </>
                   )}
@@ -145,9 +183,12 @@ export function ImportDialog({ onClose, onImported }: { onClose: () => void; onI
           ))}
         </div>
 
-        <div className="flex justify-end gap-2 px-5 py-3.5 border-t border-[color:var(--color-border)]">
+        <div className="flex items-center justify-between gap-3 border-t border-[color:var(--color-border)]/70 px-5 py-3.5">
+          <p className="text-[11px] text-[color:var(--color-text-faint)]">
+            {importing ? 'Importing… keep this tab open.' : hasProgress ? 'Import complete.' : 'Parsing runs in a background worker.'}
+          </p>
           <Button variant="secondary" size="sm" onClick={onClose} disabled={importing}>
-            {Object.keys(progress).length > 0 && !importing ? 'Done' : 'Close'}
+            {hasProgress && !importing ? 'Done' : 'Close'}
           </Button>
         </div>
       </div>
@@ -157,12 +198,15 @@ export function ImportDialog({ onClose, onImported }: { onClose: () => void; onI
 
 function ProgressRow({ label, percent }: { label: string; percent: number }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="w-14 text-[10px] uppercase text-[color:var(--color-text-faint)]">{label}</span>
-      <div className="flex-1 h-1.5 rounded-full bg-[color:var(--color-surface)] overflow-hidden">
-        <div className="h-full bg-[color:var(--color-accent)] transition-all" style={{ width: `${percent}%` }} />
+    <div className="flex items-center gap-2.5">
+      <span className="w-14 text-[10px] uppercase tracking-wide text-[color:var(--color-text-faint)]">{label}</span>
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[color:var(--color-surface)]">
+        <div
+          className="h-full rounded-full bg-[image:var(--accent-gradient)] transition-all"
+          style={{ width: `${percent}%` }}
+        />
       </div>
-      <span className="w-8 text-right text-[10px] font-mono-tabular text-[color:var(--color-text-faint)]">{percent}%</span>
+      <span className="w-8 text-right font-mono-tabular text-[10px] text-[color:var(--color-text-faint)]">{percent}%</span>
     </div>
   )
 }

@@ -91,18 +91,27 @@ export function LogDetailDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative h-full w-full max-w-md bg-[color:var(--color-bg-raised)] border-l border-[color:var(--color-border)] overflow-y-auto">
-        <div className="sticky top-0 flex items-center justify-between px-5 py-3.5 border-b border-[color:var(--color-border)] bg-[color:var(--color-bg-raised)]">
-          <h2 className="text-sm font-semibold">Log Detail</h2>
-          <button onClick={onClose} className="text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative h-full w-full max-w-md overflow-y-auto border-l border-[color:var(--color-border-strong)] bg-[color:var(--color-bg-raised)]/95 shadow-2xl backdrop-blur-xl">
+        <div className="glass-bar sticky top-0 z-10 flex items-center justify-between border-b px-5 py-4">
+          <div>
+            <p className="eyebrow">Event detail</p>
+            <h2 className="display text-sm font-semibold text-[color:var(--color-text)]">Log inspection</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-[color:var(--color-text-muted)] transition-colors hover:bg-[color:var(--color-surface-hover)] hover:text-[color:var(--color-text)]"
+            aria-label="Close detail"
+          >
             <X size={18} />
           </button>
         </div>
 
-        <div className="p-5 space-y-5 text-sm">
-          <Field label={`Timestamp (${tzLabel})`} value={formatTimestamp(log.timestamp, offsetMinutes)} mono />
-          <Field label="Severity" value={<SeverityBadge severity={log.severity} />} />
+        <div className="space-y-5 p-5 text-sm">
+          <div className="panel-soft grid grid-cols-2 gap-3 p-3.5">
+            <Field label={`Timestamp (${tzLabel})`} value={formatTimestamp(log.timestamp, offsetMinutes)} mono />
+            <Field label="Severity" value={<SeverityBadge severity={log.severity} />} />
+          </div>
           <Field label="Event" value={log.eventType ?? '—'} />
           <Field label="Source" value={`${log.srcIp ?? '—'}${log.srcPort ? ':' + log.srcPort : ''}`} mono />
           <Field label="Destination" value={`${log.dstIp ?? '—'}${log.dstPort ? ':' + log.dstPort : ''}`} mono />
@@ -116,12 +125,12 @@ export function LogDetailDrawer({
           <Field label="Message" value={log.message ?? '—'} />
 
           <div>
-            <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-faint)] mb-1.5">Raw Log</p>
-            <div className="relative rounded-md bg-[color:var(--color-bg)] border border-[color:var(--color-border)] p-3">
-              <pre className="text-[11px] font-mono-tabular whitespace-pre-wrap break-all text-[color:var(--color-text)]">{log.rawLog}</pre>
+            <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--color-text-faint)]">Raw log</p>
+            <div className="relative rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-bg)]/70 p-3">
+              <pre className="whitespace-pre-wrap break-all font-mono-tabular text-[11px] text-[color:var(--color-text)]">{log.rawLog}</pre>
               <button
                 onClick={handleCopy}
-                className="absolute top-2 right-2 rounded p-1.5 bg-[color:var(--color-surface)] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
+                className="absolute right-2 top-2 rounded-md bg-[color:var(--color-surface)] p-1.5 text-[color:var(--color-text-muted)] transition-colors hover:text-[color:var(--color-text)]"
                 aria-label="Copy raw log"
               >
                 {copied ? <Check size={13} /> : <Copy size={13} />}
@@ -130,16 +139,16 @@ export function LogDetailDrawer({
           </div>
 
           <div>
-            <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-faint)] mb-1.5">Mark</p>
+            <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--color-text-faint)]">Mark</p>
             <div className="flex flex-wrap gap-1.5">
               {MARK_OPTIONS.map((m) => (
                 <button
                   key={m.value}
                   onClick={() => handleMark(m.value)}
-                  className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                  className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs transition-colors ${
                     currentMark === m.value
-                      ? 'border-[color:var(--color-accent)] bg-[color:var(--color-accent)]/12 text-[color:var(--color-accent-strong)]'
-                      : 'border-[color:var(--color-border-strong)] text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-hover)]'
+                      ? 'bg-[color:var(--color-accent)]/15 text-[color:var(--color-accent-strong)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_45%,transparent)]'
+                      : 'text-[color:var(--color-text-muted)] shadow-[inset_0_0_0_1px_var(--color-border-strong)] hover:bg-[color:var(--color-surface-hover)]'
                   }`}
                 >
                   <span>{m.icon}</span> {m.label}
@@ -149,7 +158,7 @@ export function LogDetailDrawer({
           </div>
 
           <div>
-            <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-faint)] mb-1.5">Tags</p>
+            <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--color-text-faint)]">Tags</p>
             <div className="flex flex-wrap gap-1.5">
               {allTags.map((tag) => {
                 const active = logTags.some((t) => t.id === tag.id)
@@ -172,7 +181,7 @@ export function LogDetailDrawer({
           </div>
 
           <div>
-            <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-faint)] mb-1.5">Analyst Note</p>
+            <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--color-text-faint)]">Analyst note</p>
             <div className="space-y-2 mb-2">
               {notes.map((n) => (
                 <div key={n.id} className="group rounded-md bg-[color:var(--color-surface)] p-2.5 text-xs">
@@ -228,7 +237,7 @@ export function LogDetailDrawer({
           </div>
 
           <div>
-            <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-faint)] mb-1.5">Add to Investigation</p>
+            <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--color-text-faint)]">Add to investigation</p>
             <div className="flex gap-2">
               <select
                 value={selectedInv}
@@ -265,9 +274,9 @@ export function LogDetailDrawer({
 
 function Field({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
   return (
-    <div>
-      <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-faint)] mb-0.5">{label}</p>
-      <div className={mono ? 'font-mono-tabular text-[color:var(--color-text)]' : 'text-[color:var(--color-text)]'}>{value}</div>
+    <div className="min-w-0">
+      <p className="mb-0.5 truncate text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--color-text-faint)]">{label}</p>
+      <div className={mono ? 'break-all font-mono-tabular text-[color:var(--color-text)]' : 'break-words text-[color:var(--color-text)]'}>{value}</div>
     </div>
   )
 }

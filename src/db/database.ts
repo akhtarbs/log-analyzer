@@ -86,9 +86,13 @@ export const BUILTIN_TAGS = [
 ]
 
 export async function ensureBuiltinTags() {
-  const count = await db.tags.count()
-  if (count > 0) return
-  await db.tags.bulkAdd(BUILTIN_TAGS.map((t) => ({ ...t, builtin: true })))
+  // Run inside a transaction so concurrent initDb() calls (React Strict Mode
+  // mounts twice in development) cannot both observe an empty table and then
+  // collide on the unique `name` index.
+  await db.transaction('rw', db.tags, async () => {
+    if ((await db.tags.count()) > 0) return
+    await db.tags.bulkAdd(BUILTIN_TAGS.map((t) => ({ ...t, builtin: true })))
+  })
 }
 
 export const BUILTIN_RULES: Omit<DetectionRule, 'id' | 'createdAt'>[] = [
@@ -131,9 +135,10 @@ export const BUILTIN_RULES: Omit<DetectionRule, 'id' | 'createdAt'>[] = [
 ]
 
 export async function ensureBuiltinRules() {
-  const count = await db.detectionRules.count()
-  if (count > 0) return
-  await db.detectionRules.bulkAdd(BUILTIN_RULES.map((r) => ({ ...r, createdAt: Date.now() })))
+  await db.transaction('rw', db.detectionRules, async () => {
+    if ((await db.detectionRules.count()) > 0) return
+    await db.detectionRules.bulkAdd(BUILTIN_RULES.map((r) => ({ ...r, createdAt: Date.now() })))
+  })
 }
 
 export async function initDb() {

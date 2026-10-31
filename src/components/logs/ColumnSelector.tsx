@@ -39,12 +39,12 @@ export function ColumnSelector({
       </Button>
 
       {open && (
-        <div className="absolute right-0 mt-1 w-64 max-h-96 overflow-y-auto rounded-md border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface)] shadow-xl z-30 p-2">
-          <div className="flex items-center justify-between px-1 pb-1.5 mb-1 border-b border-[color:var(--color-border)]">
-            <span className="text-[10px] uppercase tracking-wide text-[color:var(--color-text-faint)]">Choose columns to show</span>
+        <div className="panel rise-in absolute right-0 z-30 mt-2 max-h-96 w-64 overflow-y-auto p-1.5">
+          <div className="mb-1 flex items-center justify-between border-b border-[color:var(--color-border)]/70 px-2 pb-2 pt-1">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--color-text-faint)]">Visible columns</span>
             <button
               onClick={() => onChange(DEFAULT_VISIBLE_COLUMNS)}
-              className="flex items-center gap-1 text-[10px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)]"
+              className="flex items-center gap-1 text-[10px] text-[color:var(--color-text-muted)] transition-colors hover:text-[color:var(--color-accent-strong)]"
               title="Reset to default columns"
             >
               <RotateCcw size={11} /> Reset
@@ -55,8 +55,8 @@ export function ColumnSelector({
             return (
               <label
                 key={col.key}
-                className={`flex items-center gap-2 px-1.5 py-1.5 rounded text-xs cursor-pointer hover:bg-[color:var(--color-surface-hover)] ${
-                  col.mandatory ? 'opacity-70 cursor-not-allowed' : ''
+                className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-[color:var(--color-surface-hover)] ${
+                  col.mandatory ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
                 }`}
               >
                 <input
@@ -67,7 +67,7 @@ export function ColumnSelector({
                   className="accent-[color:var(--color-accent)]"
                 />
                 <span>{col.label}</span>
-                {col.mandatory && <span className="ml-auto text-[9px] uppercase text-[color:var(--color-text-faint)]">required</span>}
+                {col.mandatory && <span className="ml-auto text-[9px] uppercase tracking-wide text-[color:var(--color-text-faint)]">required</span>}
               </label>
             )
           })}

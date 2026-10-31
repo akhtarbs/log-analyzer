@@ -24,8 +24,18 @@ export default function App() {
 
   if (!ready) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#0a0e14] text-[#7d8ea3] text-sm">
-        Initializing local database…
+      <div className="relative flex h-screen w-screen flex-col items-center justify-center gap-4 overflow-hidden bg-[color:var(--color-bg)]">
+        <div className="ambient" aria-hidden />
+        <div className="relative flex flex-col items-center gap-3">
+          <div className="logo-mark h-12 w-12 rounded-2xl">
+            <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
+          </div>
+          <p className="display text-sm font-semibold tracking-wide text-[color:var(--color-text)]">Local Log Analyzer</p>
+          <p className="text-xs text-[color:var(--color-text-muted)]">Initializing local database…</p>
+          <div className="mt-1 h-1 w-40 overflow-hidden rounded-full bg-[color:var(--color-surface)]">
+            <div className="progress-indeterminate h-full w-1/3 rounded-full bg-[color:var(--color-accent)]" />
+          </div>
+        </div>
       </div>
     )
   }

@@ -34,54 +34,75 @@ export function LogFilesPanel({ onClose, onChanged }: { onClose: () => void; onC
   }
 
   const activeCount = files.filter((f) => f.active).length
+  const totalEvents = files.reduce((sum, f) => sum + f.eventCount, 0)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-2xl max-h-[80vh] flex flex-col rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-raised)] shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[color:var(--color-border)]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#04060d]/70 p-4 backdrop-blur-sm">
+      <div className="panel rise-in flex max-h-[82vh] w-full max-w-2xl flex-col overflow-hidden">
+        <div className="flex items-start justify-between gap-4 border-b border-[color:var(--color-border)]/70 px-5 py-4">
           <div>
-            <h2 className="text-sm font-semibold">Uploaded Log Files</h2>
-            <p className="text-[11px] text-[color:var(--color-text-muted)] mt-0.5">
-              {activeCount} of {files.length} included in analysis
+            <div className="mb-1 flex items-center gap-2">
+              <span className="eyebrow">Corpus</span>
+              <span className="accent-rule w-6 opacity-70" />
+            </div>
+            <h2 className="display text-base font-bold leading-tight">Uploaded Log Files</h2>
+            <p className="mt-1 text-[11px] text-[color:var(--color-text-muted)]">
+              <span className="font-semibold text-[color:var(--color-benign)]">{activeCount}</span> of {files.length} included ·{' '}
+              {formatNumber(totalEvents)} events
             </p>
           </div>
-          <button onClick={onClose} className="text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]">
+          <button
+            onClick={onClose}
+            aria-label="Close log files panel"
+            className="rounded-lg p-1.5 text-[color:var(--color-text-muted)] transition-colors hover:bg-[color:var(--color-surface-hover)] hover:text-[color:var(--color-text)]"
+          >
             <X size={18} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        <div className="flex-1 space-y-2 overflow-y-auto p-4">
           {files.length === 0 && (
-            <p className="text-xs text-[color:var(--color-text-faint)] text-center py-8">No log files imported yet.</p>
+            <div className="py-12 text-center">
+              <p className="text-sm text-[color:var(--color-text-muted)]">No log files imported yet.</p>
+              <p className="mt-1 text-xs text-[color:var(--color-text-faint)]">Import a log file to start building a corpus.</p>
+            </div>
           )}
           {files.map((file) => (
             <div
               key={file.id}
-              className={`flex items-center justify-between rounded-lg border p-3 transition-colors ${
-                file.active
-                  ? 'border-[color:var(--color-border)] bg-[color:var(--color-surface)]'
-                  : 'border-[color:var(--color-border)]/60 bg-[color:var(--color-surface)]/40 opacity-60'
+              className={`panel-soft relative flex items-center justify-between gap-4 overflow-hidden p-3.5 transition-all ${
+                file.active ? '' : 'opacity-55'
               }`}
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <FileText size={16} className="text-[color:var(--color-text-muted)] shrink-0" />
+              <span
+                aria-hidden
+                className="absolute inset-y-0 left-0 w-[3px]"
+                style={{ background: file.active ? 'var(--accent-gradient)' : 'var(--color-border-strong)' }}
+              />
+              <div className="flex min-w-0 items-center gap-3 pl-1">
+                <span className="icon-tile !h-8 !w-8 !rounded-lg">
+                  <FileText size={15} />
+                </span>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{file.name}</p>
-                  <p className="text-[10px] text-[color:var(--color-text-faint)] font-mono-tabular mt-0.5">
+                  <p className="truncate text-sm font-medium">{file.name}</p>
+                  <p className="mt-0.5 truncate font-mono-tabular text-[10px] text-[color:var(--color-text-faint)]">
                     {formatNumber(file.eventCount)} events · {file.parser} · {formatBytes(file.size)}
                     {file.processingTimeMs > 0 && ` · ${formatDuration(file.processingTimeMs)}`}
                   </p>
-                  <p className="text-[10px] text-[color:var(--color-text-faint)] font-mono-tabular">{formatTimestamp(file.importedAt, offsetMinutes)}</p>
+                  <p className="font-mono-tabular text-[10px] text-[color:var(--color-text-faint)]">
+                    {formatTimestamp(file.importedAt, offsetMinutes)}
+                  </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex shrink-0 items-center gap-1.5">
                 <span
-                  className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded ${
-                    file.active
-                      ? 'text-[color:var(--color-benign)] bg-[color:var(--color-benign)]/12'
-                      : 'text-[color:var(--color-text-faint)] bg-[color:var(--color-surface-hover)]'
-                  }`}
+                  className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                  style={{
+                    color: file.active ? 'var(--color-benign)' : 'var(--color-text-faint)',
+                    background: `color-mix(in oklab, ${file.active ? 'var(--color-benign)' : 'var(--color-text-faint)'} 12%, transparent)`,
+                    boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${file.active ? 'var(--color-benign)' : 'var(--color-text-faint)'} 26%, transparent)`,
+                  }}
                 >
                   {file.active ? 'Included' : 'Excluded'}
                 </span>
@@ -89,7 +110,8 @@ export function LogFilesPanel({ onClose, onChanged }: { onClose: () => void; onC
                 <button
                   onClick={() => toggle(file)}
                   title={file.active ? 'Exclude from analysis' : 'Include in analysis'}
-                  className="rounded-md p-1.5 text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-hover)] hover:text-[color:var(--color-text)]"
+                  aria-label={file.active ? 'Exclude from analysis' : 'Include in analysis'}
+                  className="rounded-lg p-1.5 text-[color:var(--color-text-muted)] transition-colors hover:bg-[color:var(--color-surface-hover)] hover:text-[color:var(--color-text)]"
                 >
                   {file.active ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
@@ -97,7 +119,8 @@ export function LogFilesPanel({ onClose, onChanged }: { onClose: () => void; onC
                 <button
                   onClick={() => setPendingDelete(file)}
                   title="Delete file and its events"
-                  className="rounded-md p-1.5 text-[color:var(--color-text-faint)] hover:bg-[color:var(--color-critical)]/10 hover:text-[color:var(--color-critical)]"
+                  aria-label="Delete file and its events"
+                  className="rounded-lg p-1.5 text-[color:var(--color-text-faint)] transition-colors hover:bg-[color:var(--color-critical)]/12 hover:text-[color:var(--color-critical)]"
                 >
                   <Trash2 size={15} />
                 </button>
@@ -106,22 +129,24 @@ export function LogFilesPanel({ onClose, onChanged }: { onClose: () => void; onC
           ))}
         </div>
 
-        <div className="px-5 py-3 border-t border-[color:var(--color-border)] text-[11px] text-[color:var(--color-text-faint)]">
-          Excluded files stay in local storage but their events are hidden from the dashboard, analysis, and detection rules until re-included.
+        <div className="border-t border-[color:var(--color-border)]/70 px-5 py-3 text-[11px] leading-relaxed text-[color:var(--color-text-faint)]">
+          Excluded files stay in local storage, but their events are hidden from the dashboard, analysis, and detection rules until re-included.
         </div>
       </div>
 
       {pendingDelete && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-[color:var(--color-critical)]/40 bg-[color:var(--color-bg-raised)] p-5">
-            <div className="flex items-center gap-2 mb-2 text-[color:var(--color-critical)]">
-              <AlertTriangle size={18} />
-              <p className="text-sm font-semibold">Delete "{pendingDelete.name}"?</p>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#04060d]/75 p-4 backdrop-blur-sm">
+          <div className="panel rise-in w-full max-w-sm overflow-hidden">
+            <div className="border-b border-[color:var(--color-border)]/70 px-5 py-4">
+              <div className="flex items-center gap-2 text-[color:var(--color-critical)]">
+                <AlertTriangle size={18} />
+                <p className="text-sm font-semibold">Delete "{pendingDelete.name}"?</p>
+              </div>
             </div>
-            <p className="text-xs text-[color:var(--color-text-muted)] mb-4">
+            <p className="px-5 py-4 text-xs leading-relaxed text-[color:var(--color-text-muted)]">
               This permanently removes {formatNumber(pendingDelete.eventCount)} events and any marks, tags, or notes attached to them. This action cannot be undone.
             </p>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 border-t border-[color:var(--color-border)]/70 px-5 py-3">
               <Button variant="secondary" size="sm" onClick={() => setPendingDelete(null)} disabled={busy}>Cancel</Button>
               <Button variant="danger" size="sm" onClick={confirmDelete} disabled={busy}>{busy ? 'Deleting…' : 'Delete'}</Button>
             </div>

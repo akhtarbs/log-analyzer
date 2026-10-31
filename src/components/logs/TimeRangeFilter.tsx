@@ -21,7 +21,7 @@ export interface TimeRange {
 export const EMPTY_TIME_RANGE: TimeRange = { start: null, end: null }
 
 const FIELD_BASE =
-  'rounded-md border border-[color:var(--color-border-strong)] bg-[color:var(--color-bg)] px-2 py-1.5 text-xs font-mono-tabular'
+  'rounded-lg border border-[color:var(--color-border-strong)] bg-[color:var(--color-bg)] px-2 py-1.5 text-xs font-mono-tabular transition-colors focus:border-[color:var(--color-accent)]/60 focus:outline-none'
 
 const TIME_FIELDS: { key: keyof TimeParts; label: string; width: string; maxLength: number }[] = [
   { key: 'hh', label: 'Hour', width: 'w-10', maxLength: 2 },
@@ -70,7 +70,7 @@ function DateTimeField({
 
   return (
     <div>
-      <label className="text-[10px] uppercase tracking-wide text-[color:var(--color-text-faint)] block mb-1">{label}</label>
+      <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--color-text-faint)]">{label}</label>
       <div className="flex flex-wrap items-center gap-1.5">
         <input
           type="date"
@@ -83,7 +83,7 @@ function DateTimeField({
           {TIME_FIELDS.map((f, i) => (
             <span key={f.key} className="flex items-center gap-0.5">
               {i > 0 && (
-                <span className="text-[color:var(--color-text-faint)] text-xs">{i === 3 ? '.' : ':'}</span>
+                <span className="text-xs text-[color:var(--color-text-faint)]">{i === 3 ? '.' : ':'}</span>
               )}
               <input
                 type="text"
@@ -98,7 +98,7 @@ function DateTimeField({
                   if (e.key === 'Enter') commit(draft)
                 }}
                 onFocus={(e) => e.target.select()}
-                className={`${FIELD_BASE} ${f.width} text-center px-1 disabled:opacity-40`}
+                className={`${FIELD_BASE} ${f.width} px-1 text-center disabled:opacity-40`}
               />
             </span>
           ))}
@@ -109,7 +109,7 @@ function DateTimeField({
           type="button"
           disabled={!hasDate}
           onClick={() => commit(END_OF_DAY)}
-          className="mt-1 text-[10px] text-[color:var(--color-text-muted)] underline decoration-dotted hover:text-[color:var(--color-accent)] disabled:opacity-40 disabled:no-underline"
+          className="mt-1.5 text-[10px] text-[color:var(--color-text-muted)] underline decoration-dotted underline-offset-2 transition-colors hover:text-[color:var(--color-accent-strong)] disabled:opacity-40 disabled:no-underline"
         >
           Set to end of day (23:59:59.999)
         </button>
@@ -162,18 +162,23 @@ export function TimeRangeFilter({ value, onChange }: { value: TimeRange; onChang
     <div className="relative" ref={ref}>
       <Button variant="secondary" size="sm" onClick={() => setOpen((v) => !v)}>
         <CalendarClock size={14} /> {active ? 'Time Range: Active' : 'Time Range'}
+        {active && <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-[color:var(--color-accent)] shadow-[0_0_8px_0_var(--color-accent)]" />}
       </Button>
 
       {open && (
-        <div className="absolute left-0 mt-1 w-[26rem] max-w-[90vw] rounded-md border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface)] shadow-xl z-30 p-3 space-y-3">
+        <div className="panel rise-in absolute left-0 z-30 mt-2 w-[26rem] max-w-[90vw] space-y-3 p-4">
+          <div className="flex items-center gap-2">
+            <span className="eyebrow">Window</span>
+            <span className="accent-rule w-6 opacity-70" />
+          </div>
           <DateTimeField label="From" value={startInput} onChange={setStartInput} />
           <DateTimeField label="To" value={endInput} onChange={setEndInput} endOfDayShortcut />
-          <p className="text-[10px] text-[color:var(--color-text-faint)]">
+          <p className="rounded-lg bg-[color:var(--color-surface)]/50 p-2.5 text-[10px] leading-relaxed text-[color:var(--color-text-faint)]">
             Pick a date and the time starts at 00:00:00.000; adjust hour, minute, second or millisecond if needed. Times are in{' '}
-            <span className="text-[color:var(--color-text-muted)] font-medium">{label}</span>, matching the Timestamp column — change the display
+            <span className="font-medium text-[color:var(--color-text-muted)]">{label}</span>, matching the Timestamp column — change the display
             timezone in Settings. Leave a date empty for an open-ended range. To include the whole last day, use "end of day".
           </p>
-          <div className="flex justify-between gap-2 pt-1 border-t border-[color:var(--color-border)]">
+          <div className="flex justify-between gap-2 border-t border-[color:var(--color-border)]/70 pt-3">
             <Button variant="ghost" size="sm" onClick={clear}>
               <X size={12} /> Clear
             </Button>

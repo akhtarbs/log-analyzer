@@ -91,6 +91,76 @@ https://USERNAME.github.io/log-analyzer/
 
 The app uses `HashRouter` (routes like `#/logs`, `#/investigations/3`) specifically because GitHub Pages has no server-side rewrite rules — a plain `BrowserRouter` would 404 on refresh for any route other than `/`. Hash-based routes always resolve to `index.html`.
 
+## Vercel Deployment
+
+The app is a fully static, client-side build (no API routes, no database, no env vars), so Vercel can host it as a plain Vite site. A `vercel.json` is included with the build command, output directory, framework preset, and a catch-all rewrite.
+
+### 1. Push the project to a Git host
+
+```bash
+git init
+git add .
+git commit -m "Local Log Analyzer"
+git branch -M main
+git remote add origin https://github.com/<you>/<repo>.git
+git push -u origin main
+```
+
+Vercel deploys from GitHub, GitLab, or Bitbucket. This project lives at the repository root, so no subdirectory is involved. (If you later nest the app inside a larger repo, note that subdirectory and use it as the Root Directory.)
+
+### 2. Import the project in Vercel
+
+1. Sign in at [vercel.com](https://vercel.com) and choose **Add New → Project**.
+2. Select the repository you just pushed and click **Import**.
+3. Leave **Root Directory** empty — the app is at the repository root. (Only set it if you moved the app into a subfolder.)
+4. Leave **Framework Preset** on **Vite** (Vercel reads it from `vercel.json` too).
+5. Confirm the build settings:
+
+   | Setting | Value |
+   |---|---|
+   | Install Command | `npm install` (default) |
+   | Build Command | `npm run build` |
+   | Output Directory | `dist` |
+   | Node.js Version | **22.x** (Vite 8 needs Node 20.19+ or 22.12+) |
+
+6. Do **not** add any environment variables. `vite.config.ts` automatically switches the base path to `/` whenever Vercel's `VERCEL` variable is present, so assets resolve from the domain root.
+7. Click **Deploy**.
+
+The first build takes roughly a minute. When it finishes, open the generated `*.vercel.app` URL.
+
+### 3. Verify the deployment
+
+- The Dashboard loads and the **LOCAL MODE** badge is visible.
+- Importing a log (or **Load demo data**) works and survives a page refresh — data is stored in that browser's IndexedDB.
+- Deep links such as `https://<project>.vercel.app/#/logs` and `#/settings` open correctly. Routing is hash-based (`HashRouter`), so refreshes never need a server rewrite; the rewrite in `vercel.json` is only a safety net.
+- The app still loads with the network disabled after the first visit (service worker from `vite-plugin-pwa`).
+
+### 4. Deploy from the CLI (alternative)
+
+```bash
+npm i -g vercel
+cd log-analyzer/local-log-analyzer
+vercel          # preview deployment
+vercel --prod   # production deployment
+```
+
+The CLI asks the same questions as the dashboard and respects `vercel.json`, so the defaults are fine.
+
+### 5. Subsequent deploys
+
+Every push to the connected branch triggers a production deployment; pull requests get their own preview URLs automatically. No build configuration needs to be repeated.
+
+### Custom domain
+
+In the Vercel project, open **Settings → Domains**, add your domain, and follow the DNS instructions. No code change is required because the base path is already `/` on Vercel.
+
+### Vercel troubleshooting
+
+- **Blank page or unstyled content** — the build was served from a sub-path. Confirm no `VITE_BASE` environment variable is set in Vercel; the app must use `/` there.
+- **404 on a non-hash URL such as `/logs`** — use the hash URLs (`/#/logs`). `vercel.json` rewrites unknown paths to `index.html`, but client routes are hash-based by design so the same build also works on GitHub Pages.
+- **Build fails on an old Node version** — set **Node.js Version** to 22.x in **Settings → General**.
+- **"Some chunks are larger than 500 kB" warning** — expected: Recharts and the app ship in one main chunk (about 305 kB gzipped). It is a warning, not a build failure.
+
 ## Local Storage / IndexedDB
 
 Everything lives in a single IndexedDB database, `LogAnalyzerDB`, managed by [Dexie](https://dexie.org):

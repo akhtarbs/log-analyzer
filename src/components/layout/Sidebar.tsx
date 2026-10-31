@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, ListTree, ChartColumn, ShieldAlert, SlidersHorizontal, Bookmark, Settings, ScanSearch } from 'lucide-react'
+import { LayoutDashboard, ListTree, ChartColumn, ScanSearch, ShieldAlert, Bookmark, Settings, ShieldCheck } from 'lucide-react'
 import { cn } from '../../utils/cn'
 
 const NAV_ITEMS = [
@@ -16,44 +16,58 @@ export function Sidebar({ collapsed, onNavigate }: { collapsed?: boolean; onNavi
   return (
     <aside
       className={cn(
-        'flex h-full flex-col border-r border-[color:var(--color-border)] bg-[color:var(--color-bg-raised)]',
-        collapsed ? 'w-16' : 'w-56',
+        'flex h-full flex-col border-r border-[color:var(--color-border)] bg-[color:var(--color-bg-raised)]/85 backdrop-blur-xl',
+        collapsed ? 'w-16' : 'w-60',
       )}
     >
-      <div className="flex items-center gap-2 px-4 h-14 border-b border-[color:var(--color-border)]">
-        <SlidersHorizontal size={18} className="text-[color:var(--color-accent)] shrink-0" />
-        {!collapsed && <span className="font-mono-tabular font-bold tracking-tight text-sm">LOG ANALYZER</span>}
+      <div className="flex h-16 items-center gap-2.5 border-b border-[color:var(--color-border)] px-4">
+        <span className="logo-mark">
+          <ShieldCheck size={17} strokeWidth={2.2} />
+        </span>
+        {!collapsed && (
+          <div className="min-w-0">
+            <span className="display block text-[13px] font-bold leading-tight tracking-tight text-[color:var(--color-text)]">
+              Log Analyzer
+            </span>
+            <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-text-faint)]">
+              SOC console
+            </span>
+          </div>
+        )}
       </div>
 
-      <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-2.5 py-4">
+        {!collapsed && <p className="eyebrow px-2 pb-1.5">Workspace</p>}
         {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.end}
             onClick={onNavigate}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-[color:var(--color-accent)]/12 text-[color:var(--color-accent-strong)]'
-                  : 'text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-hover)] hover:text-[color:var(--color-text)]',
-              )
-            }
+            className={({ isActive }) => cn('sidebar-link', isActive && 'sidebar-link-active')}
+            title={collapsed ? item.label : undefined}
           >
-            <item.icon size={16} className="shrink-0" />
-            {!collapsed && <span>{item.label}</span>}
+            {({ isActive }) => (
+              <>
+                <item.icon
+                  size={16}
+                  strokeWidth={2}
+                  className={cn('shrink-0', isActive && 'text-[color:var(--color-accent-strong)]')}
+                />
+                {!collapsed && <span>{item.label}</span>}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
 
-      <div className="p-3 border-t border-[color:var(--color-border)]">
-        <div className="flex items-center gap-2 rounded-md bg-[color:var(--color-surface)] px-2.5 py-2 text-xs">
-          <span className="relative flex h-2 w-2">
+      <div className="border-t border-[color:var(--color-border)] p-3">
+        <div className="flex items-center gap-2 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--color-text-muted)]">
+          <span className="relative flex h-2 w-2 shrink-0">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[color:var(--color-benign)] opacity-60" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-[color:var(--color-benign)]" />
           </span>
-          {!collapsed && <span className="text-[color:var(--color-text-muted)] font-medium">LOCAL MODE</span>}
+          {!collapsed && <span className="truncate">Local only</span>}
         </div>
       </div>
     </aside>

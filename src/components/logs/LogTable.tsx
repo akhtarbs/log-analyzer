@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import type { LogEvent, Tag } from '../../types'
+import type { LogEvent, Severity, Tag } from '../../types'
 import { SeverityBadge, MarkBadge } from '../ui/Badge'
 import { formatTimestamp } from '../../utils/format'
 import { useTimezone } from '../../hooks/useTimezone'
@@ -18,12 +18,24 @@ interface LogTableProps {
 }
 
 const SELECT_COL_WIDTH = 36
-const ROW_HEIGHT = 34
+const ROW_HEIGHT = 36
+
+const SEVERITY_RAIL: Record<Severity, string> = {
+  CRITICAL: 'var(--color-critical)',
+  HIGH: 'var(--color-high)',
+  MEDIUM: 'var(--color-medium)',
+  LOW: 'var(--color-low)',
+  INFO: 'var(--color-info)',
+}
 
 function renderCell(col: ColumnDef, log: LogEvent, offsetMinutes: number, tags?: Tag[]) {
   switch (col.key) {
     case 'timestamp':
-      return <span className="font-mono-tabular text-[color:var(--color-text-muted)]">{formatTimestamp(log.timestamp, offsetMinutes)}</span>
+      return (
+        <span className="font-mono-tabular text-[color:var(--color-text-muted)]">
+          {formatTimestamp(log.timestamp, offsetMinutes)}
+        </span>
+      )
     case 'severity':
       return <SeverityBadge severity={log.severity} />
     case 'mark':
@@ -35,7 +47,11 @@ function renderCell(col: ColumnDef, log: LogEvent, offsetMinutes: number, tags?:
             <span
               key={t.id}
               className="rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none"
-              style={{ backgroundColor: `${t.color}22`, color: t.color }}
+              style={{
+                backgroundColor: `color-mix(in oklab, ${t.color} 16%, transparent)`,
+                color: t.color,
+                boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${t.color} 30%, transparent)`,
+              }}
             >
               {t.name}
             </span>
@@ -45,27 +61,41 @@ function renderCell(col: ColumnDef, log: LogEvent, offsetMinutes: number, tags?:
         <span className="text-[color:var(--color-text-faint)]">—</span>
       )
     case 'eventType':
-      return <span className="truncate font-medium block">{log.eventType ?? '—'}</span>
+      return log.eventType ? (
+        <span className="event-pill">
+          <span className="truncate">{log.eventType}</span>
+        </span>
+      ) : (
+        <span className="text-[color:var(--color-text-faint)]">—</span>
+      )
     case 'rawLog':
-      return <span className="truncate block font-mono-tabular text-[color:var(--color-text-muted)]">{log.rawLog}</span>
+      return <span className="block truncate font-mono-tabular text-[color:var(--color-text-muted)]">{log.rawLog}</span>
     case 'message':
     case 'url':
     case 'userAgent':
     case 'referer':
     case 'requestBody':
-      return <span className="truncate block text-[color:var(--color-text-muted)]">{(log as any)[col.key] ?? '—'}</span>
+      return <span className="block truncate text-[color:var(--color-text-muted)]">{(log as any)[col.key] ?? '—'}</span>
     case 'srcPort':
     case 'dstPort':
       return <span className="font-mono-tabular text-[color:var(--color-text-muted)]">{(log as any)[col.key] ?? '—'}</span>
     case 'srcIp':
     case 'dstIp':
-      return <span className="font-mono-tabular truncate block">{(log as any)[col.key] ?? '—'}</span>
+      return <span className="block truncate font-mono-tabular">{(log as any)[col.key] ?? '—'}</span>
     default:
-      return <span className="truncate block text-[color:var(--color-text-muted)]">{(log as any)[col.key] ?? '—'}</span>
+      return <span className="block truncate text-[color:var(--color-text-muted)]">{(log as any)[col.key] ?? '—'}</span>
   }
 }
 
-export function LogTable({ rows, selected, visibleColumns, tagsByLogId, onToggleSelect, onToggleSelectAll, onRowClick }: LogTableProps) {
+export function LogTable({
+  rows,
+  selected,
+  visibleColumns,
+  tagsByLogId,
+  onToggleSelect,
+  onToggleSelectAll,
+  onRowClick,
+}: LogTableProps) {
   const parentRef = useRef<HTMLDivElement>(null)
   const { offsetMinutes, label } = useTimezone()
 
@@ -81,22 +111,28 @@ export function LogTable({ rows, selected, visibleColumns, tagsByLogId, onToggle
   const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id!))
 
   return (
-    <div className="flex flex-col h-full border border-[color:var(--color-border)] rounded-lg overflow-hidden bg-[color:var(--color-bg-raised)]">
+    <div className="table-shell flex h-full flex-col">
       <div className="overflow-x-auto">
         <div style={{ minWidth: totalWidth }}>
           {/* header */}
-          <div className="flex border-b border-[color:var(--color-border)] bg-[color:var(--color-surface)] sticky top-0 z-10 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]">
-            <div style={{ width: SELECT_COL_WIDTH }} className="px-2.5 py-2 shrink-0 flex items-center">
-              <input type="checkbox" checked={allSelected} onChange={onToggleSelectAll} className="accent-[color:var(--color-accent)]" />
+          <div className="log-head sticky top-0 z-10 flex text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--color-text-muted)]">
+            <div style={{ width: SELECT_COL_WIDTH }} className="flex shrink-0 items-center px-2.5 py-2.5">
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={onToggleSelectAll}
+                className="accent-[color:var(--color-accent)]"
+                aria-label="Select all rows"
+              />
             </div>
             {columns.map((col) => (
-              <div key={col.key} style={{ width: col.width }} className="px-2.5 py-2 shrink-0 flex items-center truncate">
+              <div key={col.key} style={{ width: col.width }} className="flex shrink-0 items-center truncate px-2.5 py-2.5">
                 {col.key === 'timestamp' ? `${col.label} (${label})` : col.label}
               </div>
             ))}
           </div>
 
-          <div ref={parentRef} className="overflow-y-auto" style={{ height: 'calc(100vh - 260px)' }}>
+          <div ref={parentRef} className="overflow-y-auto" style={{ height: 'calc(100vh - 268px)' }}>
             <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
               {virtualizer.getVirtualItems().map((vRow) => {
                 const log = rows[vRow.index]
@@ -104,23 +140,34 @@ export function LogTable({ rows, selected, visibleColumns, tagsByLogId, onToggle
                 return (
                   <div
                     key={log.id}
-                    className={cn(
-                      'flex absolute top-0 left-0 w-full items-center text-xs border-b border-[color:var(--color-border)]/60 cursor-pointer hover:bg-[color:var(--color-surface-hover)]',
-                      isSelected && 'bg-[color:var(--color-accent)]/8',
-                    )}
+                    className={cn('log-row flex absolute left-0 top-0 w-full cursor-pointer items-center text-xs', {
+                      'log-row-alt': vRow.index % 2 === 1,
+                      'log-row-selected': isSelected,
+                    })}
                     style={{ height: ROW_HEIGHT, transform: `translateY(${vRow.start}px)` }}
                     onClick={() => onRowClick(log)}
                   >
-                    <div style={{ width: SELECT_COL_WIDTH }} className="px-2.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <span
+                      className="log-rail"
+                      style={{ backgroundColor: SEVERITY_RAIL[log.severity], color: SEVERITY_RAIL[log.severity] }}
+                      aria-hidden
+                    />
+                    <div style={{ width: SELECT_COL_WIDTH }} className="shrink-0 px-2.5" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => onToggleSelect(log.id!)}
                         className="accent-[color:var(--color-accent)]"
+                        aria-label="Select row"
                       />
                     </div>
                     {columns.map((col) => (
-                      <div key={col.key} style={{ width: col.width }} className="px-2.5 shrink-0 min-w-0" title={col.wide ? String((log as any)[col.key] ?? '') : undefined}>
+                      <div
+                        key={col.key}
+                        style={{ width: col.width }}
+                        className="min-w-0 shrink-0 px-2.5"
+                        title={col.wide ? String((log as any)[col.key] ?? '') : undefined}
+                      >
                         {renderCell(col, log, offsetMinutes, tagsByLogId?.get(log.id!))}
                       </div>
                     ))}

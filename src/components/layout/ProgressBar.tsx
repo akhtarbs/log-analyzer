@@ -33,12 +33,12 @@ export function ProgressBar() {
 
   return (
     <>
-      <div className="fixed top-0 inset-x-0 z-[80] h-0.5 bg-transparent pointer-events-none" aria-hidden>
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-[80] h-[3px] bg-transparent" aria-hidden>
         {lead.percent === null ? (
-          <div className="progress-indeterminate h-full w-1/3 bg-[color:var(--color-accent)]" />
+          <div className="progress-indeterminate h-full w-1/3 bg-[image:var(--accent-gradient)] shadow-[0_0_12px_0_var(--color-accent)]" />
         ) : (
           <div
-            className="h-full bg-[color:var(--color-accent)] transition-[width] duration-200"
+            className="h-full bg-[image:var(--accent-gradient)] shadow-[0_0_12px_0_var(--color-accent)] transition-[width] duration-200"
             style={{ width: `${lead.percent}%` }}
           />
         )}
@@ -61,13 +61,13 @@ export function ProgressBar() {
 
 function TaskCard({ task, now }: { task: TaskSnapshot; now: number }) {
   return (
-    <div className="rounded-lg border border-[color:var(--color-border-strong)] bg-[color:var(--color-bg-raised)] p-3 shadow-xl">
+    <div className="panel p-3">
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-medium truncate" title={task.label}>{task.label}</p>
         {task.cancellable && !task.cancelling && (
           <button
             onClick={() => cancelTask(task.id)}
-            className="shrink-0 rounded p-0.5 text-[color:var(--color-text-faint)] hover:text-[color:var(--color-critical)] hover:bg-[color:var(--color-surface-hover)]"
+            className="shrink-0 rounded p-0.5 text-[color:var(--color-text-faint)] hover:bg-[color:var(--color-surface-hover)] hover:text-[color:var(--color-critical)]"
             aria-label={`Cancel ${task.label}`}
             title="Cancel"
           >
@@ -76,12 +76,12 @@ function TaskCard({ task, now }: { task: TaskSnapshot; now: number }) {
         )}
       </div>
 
-      <div className="mt-2 h-1.5 rounded-full bg-[color:var(--color-surface)] overflow-hidden">
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[color:var(--color-surface)]">
         {task.percent === null ? (
-          <div className="progress-indeterminate h-full w-1/3 rounded-full bg-[color:var(--color-accent)]" />
+          <div className="progress-indeterminate h-full w-1/3 rounded-full bg-[image:var(--accent-gradient)]" />
         ) : (
           <div
-            className="h-full rounded-full bg-[color:var(--color-accent)] transition-[width] duration-200"
+            className="h-full rounded-full bg-[image:var(--accent-gradient)] transition-[width] duration-200"
             style={{ width: `${task.percent}%` }}
           />
         )}

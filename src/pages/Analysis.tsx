@@ -8,6 +8,7 @@ import { FindingsCard } from '../components/analysis/FindingsCard'
 import { IndicatorsCard } from '../components/analysis/IndicatorsCard'
 import { SummaryCards } from '../components/analysis/SummaryCards'
 import { TimelineCard } from '../components/analysis/TimelineCard'
+import { PageHeader } from '../components/ui/PageHeader'
 import { useTimezone } from '../hooks/useTimezone'
 import { openInExplorer, timeRangeTarget, type ExplorerTarget } from '../services/explorerTarget'
 import { isCancelled, startTask } from '../services/progress'
@@ -66,25 +67,30 @@ export function Analysis() {
   const open = (t: ExplorerTarget) => openInExplorer(navigate, t)
 
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-baseline justify-between gap-3">
-        <h1 className="text-lg font-bold flex items-center gap-2">
-          <ChartColumn size={18} className="text-[color:var(--color-accent)]" /> Analysis
-        </h1>
-        {computeMs !== null && !cancelled && (
-          <p className="text-[10px] text-[color:var(--color-text-faint)] font-mono-tabular">Computed in {formatDuration(computeMs)}</p>
-        )}
-      </div>
+    <div className="mx-auto max-w-[1500px] space-y-5 p-4 sm:p-6">
+      <PageHeader
+        eyebrow="Insight"
+        title="Analysis"
+        description="Aggregated behaviour across the files you have included — request volume, error rate, client mix and standout indicators."
+        icon={ChartColumn}
+        actions={
+          computeMs !== null && !cancelled ? (
+            <span className="font-mono-tabular text-[10px] text-[color:var(--color-text-faint)]">
+              Computed in {formatDuration(computeMs)}
+            </span>
+          ) : undefined
+        }
+      />
 
       {cancelled && (
-        <div className="flex items-center justify-between rounded-md border border-[color:var(--color-medium)]/30 bg-[color:var(--color-medium)]/8 px-3 py-2 text-xs text-[color:var(--color-medium)]">
+        <div className="flex items-center justify-between rounded-lg border border-[color:var(--color-medium)]/35 bg-[color:var(--color-medium)]/10 px-3.5 py-2.5 text-xs text-[color:var(--color-medium)]">
           <span>Analysis cancelled — results are incomplete.</span>
-          <button onClick={() => setReloadKey((k) => k + 1)} className="underline shrink-0 ml-3">Retry</button>
+          <button onClick={() => setReloadKey((k) => k + 1)} className="shrink-0 ml-3 underline">Retry</button>
         </div>
       )}
 
       {data && data.merged.totalEvents === 0 ? (
-        <div className="rounded-xl border border-dashed border-[color:var(--color-border-strong)] p-10 text-center text-sm text-[color:var(--color-text-faint)]">
+        <div className="panel-soft border-dashed p-10 text-center text-sm text-[color:var(--color-text-faint)]">
           No events in the included files. Import a log or include a file in the Log Explorer to see the analysis.
         </div>
       ) : (
