@@ -24,8 +24,12 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Vite 8 requires ^20.19 or >=22.12; 22 keeps CI aligned with Vercel.
+          node-version: 22
           cache: npm
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
 
       - name: Install dependencies
         run: npm ci

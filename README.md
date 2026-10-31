@@ -81,15 +81,46 @@ Covers the log parsers (format detection + field extraction) and the detection e
 
 ## GitHub Pages Deployment
 
-This repo ships with `.github/workflows/deploy.yml`. On every push to `main`, GitHub Actions runs `npm ci && npm run build` and publishes `dist/` to GitHub Pages automatically. The build's base path is set from the repository name (`VITE_BASE=/${repo-name}/`), so the app resolves correctly at:
+This repo ships with `.github/workflows/deploy.yml`. On every push to `main`, GitHub Actions runs `npm ci && npm run build` and publishes `dist/` to GitHub Pages automatically. The base path is derived from the repository name (`VITE_BASE=/${repo-name}/`), so assets resolve correctly at:
 
 ```
 https://USERNAME.github.io/log-analyzer/
 ```
 
-**To enable it:** in your repository settings, set *Pages -> Source* to **GitHub Actions**.
+### Prerequisite: Pages must be allowed for the repository
 
-The app uses `HashRouter` (routes like `#/logs`, `#/investigations/3`) specifically because GitHub Pages has no server-side rewrite rules — a plain `BrowserRouter` would 404 on refresh for any route other than `/`. Hash-based routes always resolve to `index.html`.
+| Repository visibility | Pages availability |
+| --- | --- |
+| Public | Available on every plan (Free included) |
+| Private | Requires GitHub Pro, Team, or Enterprise |
+
+On the Free plan a **private** repository cannot publish Pages at all — `https://USERNAME.github.io/log-analyzer/` stays 404. Choose one of:
+
+1. Make the repository public (Settings → General → Danger Zone → Change visibility), or
+2. Upgrade to a plan that supports Pages for private repos, or
+3. Deploy the same build to Vercel instead (see below) — Vercel serves private repos for free.
+
+### Enable it (one time)
+
+1. Repository → **Settings** → **Pages**.
+2. Under **Build and deployment → Source**, select **GitHub Actions** (not "Deploy from a branch").
+3. Push to `main`, or run it manually: **Actions → Deploy to GitHub Pages → Run workflow**.
+4. Wait for the run to finish. The URL appears in the run summary and in **Settings → Pages**.
+
+### Verify
+
+```bash
+curl -I https://USERNAME.github.io/log-analyzer/
+```
+
+Expect `HTTP/2 200`. The first deploy can take a minute; `github.io` returns 404 until the run succeeds.
+
+### Troubleshooting
+
+- **Workflow fails at "Configure Pages" with `Get Pages site failed`** — the source is still "Deploy from a branch". Switch it to **GitHub Actions**.
+- **Site 404s after a green run** — confirm the repo is public or the plan supports private Pages; then check that `dist/index.html` references `/log-analyzer/assets/...`.
+- **Blank page with 404s on `/assets/...`** — the base path does not match the repo name. The workflow derives it automatically; if you renamed the repo, re-run the workflow.
+- **A bare path like `/logs` 404s** — expected. The app uses `HashRouter` (routes like `#/logs`, `#/investigations/3`) because Pages has no server-side rewrites; hash routes always resolve to `index.html`.
 
 ## Vercel Deployment
 
