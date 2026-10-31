@@ -81,11 +81,16 @@ Covers the log parsers (format detection + field extraction) and the detection e
 
 ## GitHub Pages Deployment
 
-This repo ships with `.github/workflows/deploy.yml`. On every push to `main`, GitHub Actions runs `npm ci && npm run build` and publishes `dist/` to GitHub Pages automatically. The base path is derived from the repository name (`VITE_BASE=/${repo-name}/`), so assets resolve correctly at:
+This repo ships with `.github/workflows/deploy.yml`. On every push to `main`, GitHub Actions runs `npm ci && npm run build` and publishes `dist/` to GitHub Pages automatically.
 
-```
-https://USERNAME.github.io/log-analyzer/
-```
+The base path is taken from the `base_path` output of `actions/configure-pages`, so it is always correct:
+
+| How the site is served | `base_path` | Assets |
+| --- | --- | --- |
+| `https://USERNAME.github.io/log-analyzer/` | `/log-analyzer` | `/log-analyzer/assets/...` |
+| Custom domain, e.g. `https://log.example.com/` | `` (empty) | `/assets/...` |
+
+This matters because a custom domain maps the **project site to the domain root**, so a `/log-analyzer/` prefix there returns GitHub's 404 page for every asset.
 
 ### Prerequisite: Pages must be allowed for the repository
 
@@ -118,9 +123,10 @@ Expect `HTTP/2 200`. The first deploy can take a minute; `github.io` returns 404
 ### Troubleshooting
 
 - **Workflow fails at "Configure Pages" with `Get Pages site failed`** — the source is still "Deploy from a branch". Switch it to **GitHub Actions**.
-- **Site 404s after a green run** — confirm the repo is public or the plan supports private Pages; then check that `dist/index.html` references `/log-analyzer/assets/...`.
-- **Blank page with 404s on `/assets/...`** — the base path does not match the repo name. The workflow derives it automatically; if you renamed the repo, re-run the workflow.
+- **Site 404s after a green run** — confirm the repo is public or the plan supports private Pages; then check that `dist/index.html` references the base path matching the URL you opened.
+- **Blank white page, assets 404, `Content-Type: text/html` for `.js`** — the base path is wrong for the current domain. With a custom domain the site is served from `/`, so every `/repo-name/assets/...` request hits GitHub's 404 page. The workflow handles this automatically; if it still happens, the deployment predates the fix — re-run the workflow.
 - **A bare path like `/logs` 404s** — expected. The app uses `HashRouter` (routes like `#/logs`, `#/investigations/3`) because Pages has no server-side rewrites; hash routes always resolve to `index.html`.
+- **Service worker never registers over plain HTTP** — `registerSW.js` only runs on a secure context. Serve the site over HTTPS (GitHub Pages provides it under `https://<user>.github.io/...`; behind Cloudflare enable *SSL/TLS → Always Use HTTPS*).
 
 ## Vercel Deployment
 
@@ -275,4 +281,4 @@ A **LOCAL MODE** indicator is always visible in the header. No log content is ev
 - **Refreshing a page like `/investigations/3` shows a blank screen on GitHub Pages** — make sure you're using the deployed hash-routed URL (`.../#/investigations/3`); a bare path without the `#` won't resolve on static hosting.
 - **Import seems stuck** — very large files can take a while to read; watch the Reading/Parsing/Saving progress bars. If it's genuinely stuck, check the browser console for a Web Worker error.
 - **Storage full** — use Settings -> Clear All Data, or export a backup first, then re-import only what you need.
-- **Assets 404 after deploying** — confirm the repository name matches the `VITE_BASE` computed in `deploy.yml` (`/${repo-name}/`), or set it explicitly if you renamed the repo.
+- **Assets 404 after deploying** — the base path does not match the URL you opened. `deploy.yml` derives it from `actions/configure-pages` (`/repo-name` without a custom domain, empty with one); if the site is behind a custom domain, make sure the deployment postdates that fix.

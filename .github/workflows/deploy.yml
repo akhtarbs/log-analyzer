@@ -29,18 +29,20 @@ jobs:
           cache: npm
 
       - name: Configure Pages
+        id: pages
         uses: actions/configure-pages@v6
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build
-        # VITE_BASE must match "/<repo-name>/" so asset paths resolve correctly
-        # under https://<username>.github.io/<repo-name>/. Override this if the
-        # repository is renamed.
+        # configure-pages reports the real base path for this Pages site:
+        #   "/log-analyzer" when served from https://<user>.github.io/log-analyzer/
+        #   ""             when a custom domain serves the site at the root
+        # Trailing slash is required by Vite, so it is appended here.
         run: npm run build
         env:
-          VITE_BASE: /${{ github.event.repository.name }}/
+          VITE_BASE: ${{ steps.pages.outputs.base_path }}/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
