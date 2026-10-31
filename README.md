@@ -92,6 +92,15 @@ The base path is taken from the `base_path` output of `actions/configure-pages`,
 
 This matters because a custom domain maps the **project site to the domain root**, so a `/log-analyzer/` prefix there returns GitHub's 404 page for every asset.
 
+### Custom domain behind a proxy (Cloudflare, etc.)
+
+1. In **Settings → Pages → Custom domain**, enter the domain and let GitHub verify it. A `CNAME` file is committed by GitHub; keep it.
+2. Add the DNS record GitHub shows (`CNAME` → `<user>.github.io`). Proxying through Cloudflare is fine.
+3. In Cloudflare, set **SSL/TLS → Overview** to **Full** (or Full strict) and enable **Always Use HTTPS**. `registerSW.js` only registers on a secure context, so the app has no offline support over plain HTTP.
+4. After a deploy, purge the Cloudflare cache if the old `index.html` keeps loading. Hashed assets (`/assets/index-<hash>.js`) never collide, but a cached `index.html` points at files the new deploy no longer ships.
+
+Symptoms of the wrong base path: a blank white page, 404s on `/repo-name/assets/...`, and `Content-Type: text/html` on `.js` requests (GitHub's 404 page).
+
 ### Prerequisite: Pages must be allowed for the repository
 
 | Repository visibility | Pages availability |
